@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Class VIII English – Drag &amp; Drop Interactive Quiz</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+:root{
+  --navy:#0f1e3a;--navy2:#1B2A4A;--navy3:#243356;
+  --gold:#C9A227;--gold2:#f0c84a;--gold3:#e8b930;
+  --green:#2ecc71;--red:#e74c3c;--blue:#3498db;
+  --glass:rgba(27,42,74,0.7);--glass2:rgba(15,30,58,0.85);
+  --radius:16px;--shadow:0 8px 32px rgba(0,0,0,0.4);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{scroll-behavior:smooth;}
+body{font-family:'Nunito',sans-serif;background:var(--navy);color:#f0e8d0;min-height:100vh;overflow-x:hidden;}
+
+/* ── BACKGROUND PARTICLES ── */
+body::before{content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse at 20% 20%,rgba(201,162,39,0.07) 0%,transparent 50%),
+             radial-gradient(ellipse at 80% 80%,rgba(52,152,219,0.05) 0%,transparent 50%);
+  pointer-events:none;z-index:0;}
+
+/* ── SCREENS ── */
+.screen{display:none;position:relative;z-index:1;}
+.screen.active{display:block;}
+
+/* ══════════════════════════════
+   HOME SCREEN
+══════════════════════════════ */
+#home{min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px;}
+#home.active{display:flex;}
+
+.home-logo{text-align:center;margin-bottom:32px;}
+.home-badge{display:inline-block;background:var(--gold);color:var(--navy);font-size:10px;font-weight:900;letter-spacing:3px;text-transform:uppercase;padding:4px 16px;border-radius:20px;margin-bottom:12px;}
+.home-title{font-family:'Cinzel',serif;font-size:clamp(22px,5vw,38px);color:var(--gold);line-height:1.15;text-shadow:0 0 40px rgba(201,162,39,0.4);}
+.home-sub{color:#8aabd4;font-size:13px;margin-top:6px;}
+
+.home-card{background:var(--glass);backdrop-filter:blur(20px);border:1.5px solid rgba(201,162,39,0.25);border-radius:24px;padding:32px 28px;width:100%;max-width:460px;box-shadow:var(--shadow);}
+.home-card h2{font-family:'Cinzel',serif;font-size:16px;color:var(--gold);margin-bottom:20px;text-align:center;}
+
+.field-group{margin-bottom:14px;}
+.field-group label{display:block;font-size:11px;font-weight:800;color:#8aabd4;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;}
+.field-group input,.field-group select{width:100%;background:rgba(255,255,255,0.06);border:1.5px solid rgba(201,162,39,0.25);border-radius:10px;color:#f0e8d0;font-family:'Nunito',sans-serif;font-size:14px;padding:10px 14px;outline:none;transition:border-color 0.2s;}
+.field-group input:focus,.field-group select:focus{border-color:var(--gold);}
+.field-group input::placeholder{color:rgba(240,232,208,0.3);}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+.btn-start{width:100%;margin-top:22px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:14px;color:var(--navy);font-family:'Cinzel',serif;font-size:16px;font-weight:700;padding:16px;cursor:pointer;box-shadow:0 6px 24px rgba(201,162,39,0.45);transition:transform 0.2s,box-shadow 0.2s;letter-spacing:1px;}
+.btn-start:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(201,162,39,0.55);}
+.btn-start:active{transform:translateY(0);}
+
+.home-info{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:20px;}
+.info-pill{background:rgba(201,162,39,0.1);border:1px solid rgba(201,162,39,0.2);border-radius:20px;font-size:11px;font-weight:700;color:var(--gold);padding:4px 14px;}
+
+/* ══════════════════════════════
+   QUIZ SCREEN HEADER
+══════════════════════════════ */
+.quiz-header{background:var(--navy2);border-bottom:2px solid rgba(201,162,39,0.25);padding:12px 20px;position:sticky;top:0;z-index:200;}
+.qh-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.qh-section{font-family:'Cinzel',serif;font-size:12px;color:var(--gold);flex:1;min-width:120px;}
+.qh-score-wrap{display:flex;align-items:center;gap:6px;}
+.qh-score-label{font-size:11px;color:#8aabd4;}
+.qh-score-val{font-size:20px;font-weight:900;color:var(--gold);}
+.qh-progress{width:100%;height:7px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;margin-top:6px;}
+.qh-progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:4px;transition:width 0.5s ease;}
+
+/* SECTION NAV TABS */
+.sec-nav{background:rgba(15,30,58,0.95);border-bottom:1px solid rgba(201,162,39,0.15);padding:8px 16px;overflow-x:auto;white-space:nowrap;position:sticky;top:74px;z-index:199;}
+.sec-nav-inner{display:inline-flex;gap:6px;max-width:900px;}
+.sec-tab{display:inline-block;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#8aabd4;font-size:11px;font-weight:700;padding:5px 12px;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.sec-tab.active{background:rgba(201,162,39,0.15);border-color:var(--gold);color:var(--gold);}
+.sec-tab.done{background:rgba(46,204,113,0.1);border-color:rgba(46,204,113,0.3);color:#2ecc71;}
+
+/* ══════════════════════════════
+   SECTION CONTENT
+══════════════════════════════ */
+.sec-panel{display:none;max-width:900px;margin:0 auto;padding:24px 16px 80px;}
+.sec-panel.active{display:block;}
+
+.sec-heading{display:flex;align-items:center;gap:14px;margin-bottom:24px;}
+.sec-num{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:var(--navy);flex-shrink:0;box-shadow:0 4px 16px rgba(201,162,39,0.4);}
+.sec-info h2{font-family:'Cinzel',serif;font-size:16px;color:var(--gold);}
+.sec-info p{font-size:12px;color:#8aabd4;margin-top:3px;}
+
+/* ── WORD BANK ── */
+.word-bank{background:var(--glass);backdrop-filter:blur(12px);border:1.5px solid rgba(201,162,39,0.2);border-radius:var(--radius);padding:16px 18px;margin-bottom:22px;}
+.word-bank h3{font-size:11px;font-weight:800;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;}
+.word-bank-items{display:flex;flex-wrap:wrap;gap:8px;}
+
+/* ── DRAGGABLE CHIP ── */
+.chip{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(201,162,39,0.15),rgba(201,162,39,0.08));border:1.5px solid rgba(201,162,39,0.4);border-radius:10px;color:#f0e8d0;font-size:13px;font-weight:700;padding:7px 14px;cursor:grab;user-select:none;transition:all 0.2s;touch-action:none;position:relative;}
+.chip:hover{background:linear-gradient(135deg,rgba(201,162,39,0.28),rgba(201,162,39,0.15));border-color:var(--gold);transform:translateY(-2px);box-shadow:0 6px 18px rgba(201,162,39,0.3);}
+.chip.dragging{opacity:0.4;transform:scale(0.95);}
+.chip.placed{opacity:0.4;cursor:not-allowed;pointer-events:none;}
+.chip.correct-chip{background:linear-gradient(135deg,rgba(46,204,113,0.2),rgba(46,204,113,0.1))!important;border-color:var(--green)!important;color:var(--green)!important;}
+.chip.wrong-chip{background:linear-gradient(135deg,rgba(231,76,60,0.2),rgba(231,76,60,0.1))!important;border-color:var(--red)!important;color:var(--red)!important;}
+
+/* ── DROP ZONES ── */
+.drop-grid{display:grid;gap:12px;}
+.drop-grid.cols-2{grid-template-columns:1fr 1fr;}
+.drop-grid.cols-3{grid-template-columns:1fr 1fr 1fr;}
+.drop-grid.cols-5{grid-template-columns:repeat(5,1fr);}
+@media(max-width:600px){
+  .drop-grid.cols-2{grid-template-columns:1fr;}
+  .drop-grid.cols-3{grid-template-columns:1fr 1fr;}
+  .drop-grid.cols-5{grid-template-columns:1fr 1fr;}
+}
+
+.drop-zone{background:var(--glass);backdrop-filter:blur(10px);border:2px dashed rgba(201,162,39,0.3);border-radius:var(--radius);padding:14px;min-height:100px;transition:all 0.25s;}
+.drop-zone.drag-over{border-color:var(--gold);background:rgba(201,162,39,0.08);box-shadow:0 0 20px rgba(201,162,39,0.2);}
+.drop-zone.correct-zone{border-color:var(--green)!important;border-style:solid;background:rgba(46,204,113,0.07)!important;}
+.drop-zone.wrong-zone{border-color:var(--red)!important;border-style:solid;background:rgba(231,76,60,0.07)!important;animation:shake 0.4s ease;}
+.drop-zone h3{font-family:'Cinzel',serif;font-size:12px;color:var(--gold);margin-bottom:10px;letter-spacing:1px;}
+.drop-zone-items{display:flex;flex-wrap:wrap;gap:6px;min-height:40px;}
+
+/* ── MATCH ROWS (Section 2) ── */
+.match-table{display:flex;flex-direction:column;gap:10px;}
+.match-row{display:grid;grid-template-columns:1fr 60px 1fr;align-items:center;gap:10px;}
+.match-left{background:linear-gradient(135deg,rgba(52,152,219,0.15),rgba(52,152,219,0.08));border:1.5px solid rgba(52,152,219,0.4);border-radius:10px;padding:10px 14px;font-weight:700;font-size:14px;color:#6fc3f7;text-align:center;}
+.match-arrow{text-align:center;color:rgba(201,162,39,0.5);font-size:20px;}
+.match-drop{background:var(--glass);border:2px dashed rgba(201,162,39,0.3);border-radius:10px;min-height:44px;display:flex;align-items:center;justify-content:center;transition:all 0.25s;}
+.match-drop.drag-over{border-color:var(--gold);background:rgba(201,162,39,0.08);}
+.match-drop.correct-zone{border-color:var(--green)!important;border-style:solid;background:rgba(46,204,113,0.07)!important;}
+.match-drop.wrong-zone{border-color:var(--red)!important;border-style:solid;animation:shake 0.4s ease;}
+
+/* ── FILL BLANKS (Section 3,4,5) ── */
+.fib-list{display:flex;flex-direction:column;gap:12px;}
+.fib-row{background:var(--glass);backdrop-filter:blur(10px);border:1.5px solid rgba(201,162,39,0.2);border-radius:var(--radius);padding:14px 18px;}
+.fib-text{font-size:14px;font-weight:600;color:#e8dfc8;line-height:1.7;display:flex;align-items:center;flex-wrap:wrap;gap:6px;}
+.blank-drop{display:inline-flex;align-items:center;justify-content:center;min-width:110px;min-height:36px;background:rgba(0,0,0,0.2);border:2px dashed rgba(201,162,39,0.4);border-radius:8px;padding:4px 8px;transition:all 0.25s;vertical-align:middle;}
+.blank-drop.drag-over{border-color:var(--gold);background:rgba(201,162,39,0.1);}
+.blank-drop.correct-zone{border-color:var(--green)!important;border-style:solid;background:rgba(46,204,113,0.1)!important;}
+.blank-drop.wrong-zone{border-color:var(--red)!important;border-style:solid;animation:shake 0.4s ease;}
+
+/* ── SORT COLUMNS (Section 6) ── */
+.sort-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:480px){.sort-grid{grid-template-columns:1fr;}}
+.sort-col{background:var(--glass);backdrop-filter:blur(10px);border:2px solid rgba(201,162,39,0.2);border-radius:var(--radius);padding:16px;}
+.sort-col h3{font-family:'Cinzel',serif;font-size:13px;color:var(--gold);margin-bottom:12px;text-align:center;letter-spacing:1px;}
+.sort-drop{min-height:120px;display:flex;flex-direction:column;gap:6px;transition:all 0.25s;}
+.sort-drop.drag-over{background:rgba(201,162,39,0.06);border-radius:8px;}
+
+/* ── CHECK BUTTON ── */
+.check-wrap{text-align:center;margin-top:24px;}
+.btn-check{background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:12px;color:var(--navy);font-family:'Cinzel',serif;font-size:14px;font-weight:700;padding:13px 36px;cursor:pointer;box-shadow:0 6px 22px rgba(201,162,39,0.4);transition:all 0.2s;letter-spacing:1px;}
+.btn-check:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(201,162,39,0.5);}
+.btn-next{background:var(--navy2);border:2px solid var(--gold);border-radius:12px;color:var(--gold);font-family:'Cinzel',serif;font-size:13px;font-weight:700;padding:11px 30px;cursor:pointer;transition:all 0.2s;margin-left:10px;letter-spacing:0.5px;}
+.btn-next:hover{background:rgba(201,162,39,0.1);}
+.btn-reset{background:rgba(231,76,60,0.1);border:1.5px solid rgba(231,76,60,0.4);border-radius:10px;color:#e74c3c;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;padding:8px 18px;cursor:pointer;transition:all 0.2s;margin-left:8px;}
+.btn-reset:hover{background:rgba(231,76,60,0.18);}
+
+/* ── RESULT PANEL (inside section) ── */
+.sec-result{display:none;background:linear-gradient(135deg,rgba(27,42,74,0.95),rgba(15,30,58,0.98));border:1.5px solid rgba(201,162,39,0.3);border-radius:var(--radius);padding:20px;margin-top:20px;text-align:center;}
+.sec-result.show{display:block;}
+.sec-result .sr-score{font-size:36px;font-weight:900;color:var(--gold);}
+.sec-result .sr-label{font-size:12px;color:#8aabd4;margin-top:4px;}
+
+/* ══════════════════════════════
+   FINAL RESULT SCREEN
+══════════════════════════════ */
+#result{display:none;min-height:100vh;padding:30px 20px 60px;}
+#result.active{display:block;}
+.result-wrap{max-width:720px;margin:0 auto;}
+
+.result-hero{text-align:center;padding:40px 20px 30px;}
+.result-emoji{font-size:72px;margin-bottom:16px;display:block;}
+.result-title{font-family:'Cinzel',serif;font-size:clamp(22px,4vw,34px);color:var(--gold);margin-bottom:8px;}
+.result-score-big{font-size:clamp(52px,10vw,80px);font-weight:900;color:#f0e8d0;line-height:1;}
+.result-score-big span{font-size:clamp(22px,4vw,34px);color:#8aabd4;}
+.result-pct{font-size:20px;font-weight:800;margin-top:6px;}
+.result-grade-badge{display:inline-block;margin:16px auto;padding:8px 28px;border-radius:24px;font-weight:900;font-size:16px;letter-spacing:2px;}
+.grade-s{background:rgba(201,162,39,0.2);color:var(--gold);border:2px solid var(--gold);}
+.grade-a{background:rgba(46,204,113,0.15);color:#2ecc71;border:2px solid #2ecc71;}
+.grade-b{background:rgba(52,152,219,0.15);color:#3498db;border:2px solid #3498db;}
+.grade-c{background:rgba(230,126,34,0.15);color:#e67e22;border:2px solid #e67e22;}
+.grade-f{background:rgba(231,76,60,0.15);color:#e74c3c;border:2px solid #e74c3c;}
+
+.stars-row{display:flex;justify-content:center;gap:6px;margin:12px 0;}
+.star{font-size:32px;opacity:0.2;transition:opacity 0.4s,transform 0.4s;}
+.star.lit{opacity:1;transform:scale(1.2);}
+
+.section-breakdown{background:var(--glass);backdrop-filter:blur(12px);border:1.5px solid rgba(201,162,39,0.2);border-radius:var(--radius);padding:22px;margin-bottom:20px;}
+.section-breakdown h3{font-family:'Cinzel',serif;font-size:14px;color:var(--gold);margin-bottom:16px;}
+.sb-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.sb-label{font-size:12px;color:#b0c4de;flex:1;min-width:120px;}
+.sb-bar-wrap{flex:2;height:10px;background:rgba(255,255,255,0.08);border-radius:5px;overflow:hidden;}
+.sb-bar{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width 1s ease;}
+.sb-val{font-size:13px;font-weight:800;color:var(--gold);min-width:40px;text-align:right;}
+
+.result-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:24px;}
+.btn-retry{background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:12px;color:var(--navy);font-family:'Cinzel',serif;font-size:14px;font-weight:700;padding:13px 30px;cursor:pointer;box-shadow:0 6px 22px rgba(201,162,39,0.4);transition:all 0.2s;}
+.btn-retry:hover{transform:translateY(-2px);}
+.btn-pdf{background:var(--navy2);border:2px solid var(--gold);border-radius:12px;color:var(--gold);font-family:'Cinzel',serif;font-size:13px;font-weight:700;padding:11px 26px;cursor:pointer;transition:all 0.2s;}
+.btn-pdf:hover{background:rgba(201,162,39,0.1);}
+
+/* ══════════════════════════════
+   CONFETTI CANVAS
+══════════════════════════════ */
+#confetti-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;}
+
+/* ══════════════════════════════
+   ANIMATIONS
+══════════════════════════════ */
+@keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-6px);}80%{transform:translateX(6px);}}
+@keyframes pop{0%{transform:scale(0.8);opacity:0;}60%{transform:scale(1.1);}100%{transform:scale(1);opacity:1;}}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.pop-in{animation:pop 0.35s ease forwards;}
+.slide-up{animation:slideUp 0.3s ease forwards;}
+
+/* ── GHOST CHIP for drag ── */
+#drag-ghost{position:fixed;pointer-events:none;z-index:10000;background:linear-gradient(135deg,rgba(201,162,39,0.9),rgba(240,200,74,0.9));border:2px solid var(--gold);border-radius:10px;color:var(--navy);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;padding:8px 16px;transform:translate(-50%,-50%);opacity:0.95;box-shadow:0 8px 24px rgba(201,162,39,0.5);display:none;}
+
+/* ── TOOLTIP feedback ── */
+.tooltip{position:fixed;z-index:9998;background:rgba(27,42,74,0.96);border:1.5px solid var(--gold);border-radius:8px;color:var(--gold);font-size:12px;font-weight:700;padding:6px 14px;pointer-events:none;opacity:0;transition:opacity 0.2s;}
+.tooltip.show{opacity:1;}
+
+/* ── FOOTER ── */
+.quiz-footer{text-align:center;padding:16px;color:rgba(176,196,222,0.4);font-size:11px;border-top:1px solid rgba(201,162,39,0.1);}
+.quiz-footer span{color:rgba(201,162,39,0.5);}
+</style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+<div id="drag-ghost"></div>
+
+<!-- ══════════════════════════════════
+     HOME SCREEN
+══════════════════════════════════ -->
+<div id="home" class="active">
+  <div class="home-logo">
+    <div class="home-badge">Class VIII English</div>
+    <div class="home-title">Drag &amp; Drop<br>Interactive Quiz</div>
+    <div class="home-sub">Tamil Nadu State Board | Samacheer Kalvi</div>
+  </div>
+
+  <div class="home-card pop-in">
+    <h2>Student Details</h2>
+    <div class="field-group">
+      <label>Student Name</label>
+      <input type="text" id="h-name" placeholder="Enter your full name" />
+    </div>
+    <div class="field-group">
+      <label>School Name</label>
+      <input type="text" id="h-school" placeholder="Enter school name" />
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label>Class</label>
+        <input type="text" id="h-class" value="VIII" />
+      </div>
+      <div class="field-group">
+        <label>Section</label>
+        <input type="text" id="h-section" placeholder="A / B / C" />
+      </div>
+    </div>
+    <div class="field-group">
+      <label>Date</label>
+      <input type="text" id="h-date" placeholder="e.g. 26-06-2026" />
+    </div>
+    <button class="btn-start" onclick="startQuiz()">&#x1F3C6; Start Quiz</button>
+  </div>
+
+  <div class="home-info">
+    <span class="info-pill">6 Sections</span>
+    <span class="info-pill">Drag &amp; Drop</span>
+    <span class="info-pill">Instant Feedback</span>
+    <span class="info-pill">PDF Report</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     QUIZ SCREEN
+══════════════════════════════════ -->
+<div id="quiz" class="screen">
+  <div class="quiz-header">
+    <div class="qh-inner">
+      <div class="qh-section" id="qh-sec-label">Section 1</div>
+      <div class="qh-score-wrap">
+        <span class="qh-score-label">Score:</span>
+        <span class="qh-score-val" id="qh-score">0</span>
+      </div>
+    </div>
+    <div class="qh-progress"><div class="qh-progress-fill" id="qh-prog" style="width:0%"></div></div>
+  </div>
+
+  <div class="sec-nav">
+    <div class="sec-nav-inner" id="sec-nav-inner"></div>
+  </div>
+
+  <!-- SECTION 1: Categories -->
+  <div class="sec-panel active" id="panel-1">
+    <div class="sec-heading">
+      <div class="sec-num">1</div>
+      <div class="sec-info">
+        <h2>Noun Categories</h2>
+        <p>Drag each word into the correct category</p>
+      </div>
+    </div>
+    <div class="word-bank">
+      <h3>&#x1F4E6; Word Bank</h3>
+      <div class="word-bank-items" id="bank-1"></div>
+    </div>
+    <div class="drop-grid cols-5" id="zones-1"></div>
+    <div class="check-wrap">
+      <button class="btn-check" onclick="checkSection(1)">&#x2714; Check Answers</button>
+      <button class="btn-reset" onclick="resetSection(1)">&#x21BA; Reset</button>
+      <button class="btn-next" onclick="goSection(2)">Next &#x2192;</button>
+    </div>
+    <div class="sec-result" id="res-1"></div>
+  </div>
+
+  <!-- SECTION 2: Match Proper → Common -->
+  <div class="sec-panel" id="panel-2">
+    <div class="sec-heading">
+      <div class="sec-num">2</div>
+      <div class="sec-info">
+        <h2>Proper → Common Noun Match</h2>
+        <p>Drag the common noun to match each proper noun</p>
+      </div>
+    </div>
+    <div class="word-bank">
+      <h3>&#x1F4E6; Word Bank</h3>
+      <div class="word-bank-items" id="bank-2"></div>
+    </div>
+    <div class="match-table" id="zones-2"></div>
+    <div class="check-wrap">
+      <button class="btn-check" onclick="checkSection(2)">&#x2714; Check Answers</button>
+      <button class="btn-reset" onclick="resetSection(2)">&#x21BA; Reset</button>
+      <button class="btn-next" onclick="goSection(3)">Next &#x2192;</button>
+    </div>
+    <div class="sec-result" id="res-2"></div>
+  </div>
+
+  <!-- SECTION 3: Collective Nouns -->
+  <div class="sec-panel" id="panel-3">
+    <div class="sec-heading">
+      <div class="sec-num">3</div>
+      <div class="sec-info">
+        <h2>Collective Nouns</h2>
+        <p>Drag the correct word into each blank</p>
+      </div>
+    </div>
+    <div class="word-bank">
+      <h3>&#x1F4E6; Word Bank</h3>
+      <div class="word-bank-items" id="bank-3"></div>
+    </div>
+    <div class="fib-list" id="zones-3"></div>
+    <div class="check-wrap">
+      <button class="btn-check" onclick="checkSection(3)">&#x2714; Check Answers</button>
+      <button class="btn-reset" onclick="resetSection(3)">&#x21BA; Reset</button>
+      <button class="btn-next" onclick="goSection(4)">Next &#x2192;</button>
+    </div>
+    <div class="sec-result" id="res-3"></div>
+  </div>
+
+  <!-- SECTION 4: Pronouns -->
+  <div class="sec-panel" id="panel-4">
+    <div class="sec-heading">
+      <div class="sec-num">4</div>
+      <div class="sec-info">
+        <h2>Personal Pronouns</h2>
+        <p>Drag the correct pronoun into each blank</p>
+      </div>
+    </div>
+    <div class="word-bank">
+      <h3>&#x1F4E6; Word Bank</h3>
+      <div class="word-bank-items" id="bank-4"></div>
+    </div>
+    <div class="fib-list" id="zones-4"></div>
+    <div class="check-wrap">
+      <button class="btn-check" onclick="checkSection(4)">&#x2714; Check Answers</button>
+      <button class="btn-reset" onclick="resetSection(4)">&#x21BA; Reset</button>
+      <button class="btn-next" onclick="goSection(5)">Next &#x2192;</button>
+    </div>
+    <div class="sec-result" id="res-4"></div>
+  </div>
+
+  <!-- SECTION 5: Possessive Pronouns -->
+  <div class="sec-panel" id="panel-5">
+    <div class="sec-heading">
+      <div class="sec-num">5</div>
+      <div class="sec-info">
+        <h2>Possessive Pronouns</h2>
+        <p>Drag the correct possessive pronoun</p>
+      </div>
+    </div>
+    <div class="word-bank">
+      <h3>&#x1F4E6; Word Bank</h3>
+      <div class="word-bank-items" id="bank-5"></div>
+    </div>
+    <div class="fib-list" id="zones-5"></div>
+    <div class="check-wrap">
+      <button class="btn-check" onclick="checkSection(5)">&#x2714; Check Answers</button>
+      <button class="btn-reset" onclick="resetSection(5)">&#x21BA; Reset</button>
+      <button class="btn-next" onclick="goSection(6)">Next &#x2192;</button>
+    </div>
+    <div class="sec-result" id="res-5"></div>
+  </div>
+
+  <!-- SECTION 6: Transitive / Intransitive -->
+  <div class="sec-panel" id="panel-6">
+    <div class="sec-heading">
+      <div class="sec-num">6</div>
+      <div class="sec-info">
+        <h2>Transitive &amp; Intransitive Verbs</h2>
+        <p>Sort each verb into the correct column</p>
+      </div>
+    </div>
+    <div class="word-bank">
+      <h3>&#x1F4E6; Word Bank</h3>
+      <div class="word-bank-items" id="bank-6"></div>
+    </div>
+    <div class="sort-grid">
+      <div class="sort-col">
+        <h3>&#x1F538; Transitive</h3>
+        <div class="sort-drop drop-zone" id="zone-trans" data-zone="trans"></div>
+      </div>
+      <div class="sort-col">
+        <h3>&#x1F539; Intransitive</h3>
+        <div class="sort-drop drop-zone" id="zone-intrans" data-zone="intrans"></div>
+      </div>
+    </div>
+    <div class="check-wrap">
+      <button class="btn-check" onclick="checkSection(6)">&#x2714; Check Answers</button>
+      <button class="btn-reset" onclick="resetSection(6)">&#x21BA; Reset</button>
+      <button class="btn-next" onclick="showResult()">&#x1F3C6; Finish &amp; Get Result</button>
+    </div>
+    <div class="sec-result" id="res-6"></div>
+  </div>
+
+  <div class="quiz-footer">
+    <span>English Teachers Hub — Theni</span> &nbsp;|&nbsp;
+    T.S. Ramachandran, ELT, GHSS Erasakkanayakanur, Theni District
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     RESULT SCREEN
+══════════════════════════════════ -->
+<div id="result" class="screen">
+  <div class="result-wrap">
+    <div class="result-hero">
+      <span class="result-emoji" id="res-emoji">&#x1F389;</span>
+      <div class="result-title" id="res-main-title">Outstanding!</div>
+      <div class="result-score-big" id="res-score-big">50 <span>/ 50</span></div>
+      <div class="result-pct" id="res-pct-line"></div>
+      <div class="result-grade-badge" id="res-grade-badge">Grade S</div>
+      <div class="stars-row" id="stars-row">
+        <span class="star" id="star1">&#x2B50;</span>
+        <span class="star" id="star2">&#x2B50;</span>
+        <span class="star" id="star3">&#x2B50;</span>
+      </div>
+    </div>
+
+    <div class="section-breakdown">
+      <h3>&#x1F4CA; Section-wise Performance</h3>
+      <div id="sb-rows"></div>
+    </div>
+
+    <div class="result-btns">
+      <button class="btn-retry" onclick="retryQuiz()">&#x1F504; Retry Quiz</button>
+      <button class="btn-pdf" onclick="downloadPDF()">&#x1F4C4; Download PDF Report</button>
+    </div>
+  </div>
+  <div class="quiz-footer">
+    <span>English Teachers Hub — Theni</span> &nbsp;|&nbsp;
+    T.S. Ramachandran, ELT, GHSS Erasakkanayakanur, Theni District
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// QUIZ DATA
+// ══════════════════════════════════════════════════════════════
+const SECTIONS_DATA = {
+
+  1: {
+    type:'category',
+    zones:[
+      {id:'person',label:'Person',correct:['David','Narayanan','Sister','Kalam','Woman','Brother','Vijay','Bharathi']},
+      {id:'place', label:'Place', correct:['Madurai','Trichy','Mumbai','School','Convent']},
+      {id:'animal',label:'Animal',correct:['Parrot','Tiger','Swan','Elephant']},
+      {id:'thing', label:'Thing', correct:['Book','Pencil','Computer','Fan']},
+      {id:'idea',  label:'Idea / Feeling', correct:['Happiness','Thought','Problem','Solution','Green','Success']}
+    ],
+    words:['David','Narayanan','Sister','Kalam','Woman','Brother','Vijay','Bharathi','Madurai','Trichy','Mumbai','School','Convent','Parrot','Tiger','Swan','Elephant','Book','Pencil','Computer','Fan','Happiness','Thought','Problem','Solution','Green','Success']
+  },
+
+  2: {
+    type:'match',
+    pairs:[
+      {proper:'Priya',   common:'Girl'},
+      {proper:'Saran',   common:'Boy'},
+      {proper:'Tiger',   common:'Animal'},
+      {proper:'India',   common:'Country'},
+      {proper:'Peacock', common:'Bird'},
+      {proper:'Coimbatore',common:'City'},
+      {proper:'Lion',    common:'Animal'},
+      {proper:'Dove',    common:'Bird'},
+      {proper:'Kabilan', common:'Man'},
+      {proper:'Saleema', common:'Woman'}
+    ]
+  },
+
+  3: {
+    type:'fib',
+    words:['herd','flock','choir','bottle','cup','swarm','bunch','bowl','pair','shower'],
+    questions:[
+      {text:'A ____ of cows.',   ans:'herd'},
+      {text:'A ____ of birds.',  ans:'flock'},
+      {text:'A ____ of singers.',ans:'choir'},
+      {text:'A ____ of milk.',   ans:'bottle'},
+      {text:'A ____ of tea.',    ans:'cup'},
+      {text:'A ____ of ants.',   ans:'swarm'},
+      {text:'A ____ of grapes.', ans:'bunch'},
+      {text:'A ____ of rice.',   ans:'bowl'},
+      {text:'A ____ of shoes.',  ans:'pair'},
+      {text:'A ____ of rain.',   ans:'shower'}
+    ]
+  },
+
+  4: {
+    type:'fib',
+    words:['him','it','she','He','her'],
+    questions:[
+      {text:'I saw Mr. Balu this morning and gave ____ my homework.',ans:'him'},
+      {text:'Muthu likes computer games but doesn\'t play ____ often.',ans:'it'},
+      {text:'My aunt lives in Trichy but ____ often visits my family.',ans:'she'},
+      {text:'Neil Armstrong was born in 1930. ____ landed on the moon in 1969.',ans:'He'},
+      {text:'He helped the old lady. He gave ____ food.',ans:'her'}
+    ]
+  },
+
+  5: {
+    type:'fib',
+    words:['mine','hers'],
+    questions:[
+      {text:'This pen is ____.',        ans:'mine'},
+      {text:'The missing purse is ____.',ans:'hers'},
+      {text:'The nice speech is ____.',  ans:'hers'},
+      {text:'The new book is ____.',     ans:'mine'},
+      {text:'The costly bike is ____.',  ans:'mine'}
+    ]
+  },
+
+  6: {
+    type:'sort',
+    zones:{
+      trans:  {label:'Transitive',   correct:['Buy','Teach','Learn','Sing','Draw','Write']},
+      intrans:{label:'Intransitive', correct:['Come','Arrive','Run','Jump']}
+    },
+    words:['Buy','Teach','Learn','Sing','Draw','Write','Come','Arrive','Run','Jump']
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+let student={name:'',school:'',cls:'',section:'',date:''};
+let scores={1:0,2:0,3:0,4:0,5:0,6:0};
+let maxScores={1:0,2:0,3:0,4:0,5:0,6:0};
+let currentSec=1;
+let dragData={chip:null,chipId:null,fromBank:false,fromZone:null,text:''};
+
+// Audio Context
+let audioCtx=null;
+function getAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function playTone(freq,dur,type='sine',vol=0.3){
+  try{const a=getAudio();const o=a.createOscillator();const g=a.createGain();
+  o.connect(g);g.connect(a.destination);o.type=type;o.frequency.value=freq;
+  g.gain.setValueAtTime(vol,a.currentTime);g.gain.exponentialRampToValueAtTime(0.001,a.currentTime+dur);
+  o.start(a.currentTime);o.stop(a.currentTime+dur);}catch(e){}
+}
+function playCorrect(){playTone(880,0.12);setTimeout(()=>playTone(1100,0.12),120);}
+function playWrong(){playTone(200,0.3,'sawtooth',0.2);}
+function playDrop(){playTone(660,0.08,'triangle',0.15);}
+
+// ══════════════════════════════════════════════════════════════
+// BUILD SECTIONS
+// ══════════════════════════════════════════════════════════════
+function buildAll(){
+  buildSection1();
+  buildSection2();
+  buildFIB(3);
+  buildFIB(4);
+  buildFIB(5);
+  buildSection6();
+  buildSecNav();
+}
+
+// ── Section 1: Category drag ──
+function buildSection1(){
+  const d=SECTIONS_DATA[1];
+  maxScores[1]=d.words.length;
+  // Word bank
+  const bank=document.getElementById('bank-1');
+  bank.innerHTML='';
+  d.words.forEach(w=>{
+    bank.innerHTML+=chipHTML('s1_'+w,w);
+  });
+  // Drop zones
+  const zones=document.getElementById('zones-1');
+  zones.innerHTML='';
+  d.zones.forEach(z=>{
+    zones.innerHTML+=`<div class="drop-zone" id="dz-1-${z.id}" data-zone="${z.id}" data-sec="1">
+      <h3>${z.label}</h3><div class="drop-zone-items" id="dzi-1-${z.id}"></div></div>`;
+  });
+  attachDragListeners(bank);
+  document.querySelectorAll('#zones-1 .drop-zone').forEach(dz=>attachDropZone(dz));
+}
+
+// ── Section 2: Match ──
+function buildSection2(){
+  const d=SECTIONS_DATA[2];
+  maxScores[2]=d.pairs.length;
+  // Shuffle commons for word bank
+  const commons=[...d.pairs.map(p=>p.common)].sort(()=>Math.random()-0.5);
+  const bank=document.getElementById('bank-2');
+  bank.innerHTML='';
+  // Track duplicates
+  const seen={};
+  d.pairs.forEach(p=>{
+    if(!seen[p.common]){seen[p.common]=true;bank.innerHTML+=chipHTML('s2_'+p.common,p.common);}
+  });
+  // Show all (including duplicates) by unique id
+  bank.innerHTML='';
+  const usedLabels={};
+  d.pairs.forEach((p,i)=>{
+    const uid='s2_'+i+'_'+p.common;
+    bank.innerHTML+=chipHTML(uid,p.common);
+  });
+  // Match rows
+  const zones=document.getElementById('zones-2');
+  zones.innerHTML='';
+  d.pairs.forEach((p,i)=>{
+    zones.innerHTML+=`<div class="match-row">
+      <div class="match-left">${p.proper}</div>
+      <div class="match-arrow">&#x2192;</div>
+      <div class="match-drop drop-zone" id="md-2-${i}" data-zone="${i}" data-sec="2" data-ans="${p.common}">
+        <div class="drop-zone-items" id="mdi-2-${i}"></div>
+      </div></div>`;
+  });
+  attachDragListeners(document.getElementById('bank-2'));
+  document.querySelectorAll('#zones-2 .match-drop').forEach(dz=>attachDropZone(dz));
+}
+
+// ── Section 3,4,5: Fill blanks ──
+function buildFIB(secNum){
+  const d=SECTIONS_DATA[secNum];
+  maxScores[secNum]=d.questions.length;
+  const bank=document.getElementById('bank-'+secNum);
+  bank.innerHTML='';
+  // For sec 5, show words enough times
+  let wordList=[...d.words];
+  if(secNum===5){
+    // need 5 slots, 2 words → repeat
+    wordList=[];
+    d.questions.forEach((q,i)=>wordList.push(d.words[i%d.words.length]));
+    // unique ids
+    const seen={};
+    wordList=d.words.flatMap(w=>[w+'_a',w+'_b',w+'_c']).slice(0,d.questions.length+2);
+  }
+  // Simpler: just show each word from bank, duplicates allowed by unique id
+  d.words.forEach((w,wi)=>{
+    bank.innerHTML+=chipHTML('s'+secNum+'_w'+wi,w);
+  });
+  // Build FIB rows
+  const list=document.getElementById('zones-'+secNum);
+  list.innerHTML='';
+  d.questions.forEach((q,qi)=>{
+    const parts=q.text.split('____');
+    list.innerHTML+=`<div class="fib-row">
+      <div class="fib-text">
+        <span>${parts[0]}</span>
+        <span class="blank-drop drop-zone" id="fib-${secNum}-${qi}" data-zone="${qi}" data-sec="${secNum}" data-ans="${q.ans}">
+          <span class="drop-zone-items" id="fdi-${secNum}-${qi}" style="display:inline-flex;gap:4px;"></span>
+        </span>
+        <span>${parts[1]||''}</span>
+      </div>
+    </div>`;
+  });
+  attachDragListeners(bank);
+  document.querySelectorAll('#zones-'+secNum+' .blank-drop').forEach(dz=>attachDropZone(dz));
+}
+
+// ── Section 6: Sort ──
+function buildSection6(){
+  const d=SECTIONS_DATA[6];
+  maxScores[6]=d.words.length;
+  const bank=document.getElementById('bank-6');
+  bank.innerHTML='';
+  d.words.forEach(w=>bank.innerHTML+=chipHTML('s6_'+w,w));
+  attachDragListeners(bank);
+  document.querySelectorAll('#panel-6 .sort-drop').forEach(dz=>attachDropZone(dz));
+}
+
+function chipHTML(id,text){
+  return `<div class="chip" id="${id}" data-text="${text}" draggable="true">${text}</div>`;
+}
+
+// ── Section Nav ──
+function buildSecNav(){
+  const nav=document.getElementById('sec-nav-inner');
+  const labels=['Noun Categories','Proper→Common','Collective Nouns','Personal Pronouns','Possessive Pronouns','Verb Sorting'];
+  nav.innerHTML='';
+  for(let i=1;i<=6;i++){
+    nav.innerHTML+=`<div class="sec-tab${i===1?' active':''}" id="tab-${i}" onclick="goSection(${i})">S${i}: ${labels[i-1]}</div>`;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// DRAG & DROP — MOUSE + TOUCH
+// ══════════════════════════════════════════════════════════════
+const ghost=document.getElementById('drag-ghost');
+
+function attachDragListeners(container){
+  container.querySelectorAll('.chip').forEach(chip=>{
+    chip.addEventListener('mousedown',onChipMouseDown);
+    chip.addEventListener('touchstart',onChipTouchStart,{passive:false});
+  });
+}
+
+function attachDropZone(dz){
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');dropOnZone(dz);});
+}
+
+// ── Mouse drag ──
+let isDragging=false;
+function onChipMouseDown(e){
+  if(e.button!==0)return;
+  const chip=e.currentTarget;
+  if(chip.classList.contains('placed'))return;
+  dragData.chip=chip;
+  dragData.text=chip.dataset.text;
+  dragData.fromBank=!!chip.parentElement.classList.contains('word-bank-items');
+  dragData.fromZone=chip.closest('.drop-zone,.blank-drop,.sort-drop')||null;
+  chip.setAttribute('draggable','true');
+  chip.addEventListener('dragstart',onDragStart);
+  chip.dispatchEvent(new MouseEvent('dragstart',{bubbles:true}));
+}
+function onDragStart(e){
+  e.dataTransfer.setData('text/plain',dragData.text);
+  setTimeout(()=>{if(dragData.chip)dragData.chip.classList.add('dragging');},0);
+  document.addEventListener('dragend',onDragEnd,{once:true});
+}
+function onDragEnd(){
+  if(dragData.chip)dragData.chip.classList.remove('dragging');
+  document.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'));
+}
+
+// ── Touch drag ──
+let touchChip=null,touchOffX=0,touchOffY=0;
+function onChipTouchStart(e){
+  const chip=e.currentTarget;
+  if(chip.classList.contains('placed'))return;
+  e.preventDefault();
+  touchChip=chip;
+  dragData.chip=chip;
+  dragData.text=chip.dataset.text;
+  dragData.fromBank=!!chip.parentElement.classList.contains('word-bank-items');
+  dragData.fromZone=chip.closest('.drop-zone,.blank-drop,.sort-drop')||null;
+  const t=e.touches[0];
+  const r=chip.getBoundingClientRect();
+  touchOffX=t.clientX-r.left-r.width/2;
+  touchOffY=t.clientY-r.top-r.height/2;
+  ghost.textContent=chip.dataset.text;
+  ghost.style.display='block';
+  ghost.style.left=t.clientX+'px';
+  ghost.style.top=t.clientY+'px';
+  chip.classList.add('dragging');
+  document.addEventListener('touchmove',onTouchMove,{passive:false});
+  document.addEventListener('touchend',onTouchEnd,{once:true});
+}
+function onTouchMove(e){
+  e.preventDefault();
+  const t=e.touches[0];
+  ghost.style.left=t.clientX+'px';
+  ghost.style.top=t.clientY+'px';
+  // Highlight drop zone under finger
+  ghost.style.display='none';
+  const el=document.elementFromPoint(t.clientX,t.clientY);
+  ghost.style.display='block';
+  document.querySelectorAll('.drag-over').forEach(d=>d.classList.remove('drag-over'));
+  if(el){
+    const dz=el.closest('.drop-zone,.blank-drop,.sort-drop,.match-drop');
+    if(dz)dz.classList.add('drag-over');
+  }
+}
+function onTouchEnd(e){
+  document.removeEventListener('touchmove',onTouchMove);
+  ghost.style.display='none';
+  if(touchChip)touchChip.classList.remove('dragging');
+  const t=e.changedTouches[0];
+  ghost.style.display='none';
+  const el=document.elementFromPoint(t.clientX,t.clientY);
+  document.querySelectorAll('.drag-over').forEach(d=>d.classList.remove('drag-over'));
+  if(el){
+    const dz=el.closest('.drop-zone,.blank-drop,.sort-drop,.match-drop');
+    if(dz)dropOnZone(dz);
+  }
+  touchChip=null;
+}
+
+// ── Drop logic ──
+function dropOnZone(dz){
+  if(!dragData.chip)return;
+  const chip=dragData.chip;
+  const itemsContainer=dz.querySelector('.drop-zone-items')||dz;
+
+  // Only one chip per blank (sections 3,4,5,2)
+  const isSingleDrop=dz.classList.contains('blank-drop')||dz.classList.contains('match-drop');
+  if(isSingleDrop&&itemsContainer.querySelector('.chip')){
+    // Return existing chip to bank
+    const existing=itemsContainer.querySelector('.chip');
+    returnToBank(existing);
+  }
+
+  // Move chip from old location
+  if(dragData.fromZone&&dragData.fromZone!==dz){
+    const oldItems=dragData.fromZone.querySelector('.drop-zone-items')||dragData.fromZone;
+    if(oldItems.contains(chip))oldItems.removeChild(chip);
+  } else if(dragData.fromBank){
+    chip.parentElement.removeChild(chip);
+  }
+
+  // Place in new zone
+  itemsContainer.appendChild(chip);
+  chip.classList.remove('dragging');
+  chip.setAttribute('draggable','true');
+  chip.classList.add('pop-in');
+  setTimeout(()=>chip.classList.remove('pop-in'),400);
+
+  // Re-attach touch/drag to moved chip
+  chip.removeEventListener('mousedown',onChipMouseDown);
+  chip.removeEventListener('touchstart',onChipTouchStart);
+  chip.addEventListener('mousedown',onChipMouseDown);
+  chip.addEventListener('touchstart',onChipTouchStart,{passive:false});
+
+  playDrop();
+  dragData={chip:null,chipId:null,fromBank:false,fromZone:null,text:''};
+}
+
+function returnToBank(chip){
+  const sec=chip.id.match(/^s(\d)/);
+  if(!sec)return;
+  const bankEl=document.getElementById('bank-'+sec[1]);
+  if(bankEl)bankEl.appendChild(chip);
+}
+
+// ══════════════════════════════════════════════════════════════
+// CHECK SECTIONS
+// ══════════════════════════════════════════════════════════════
+function checkSection(sec){
+  const d=SECTIONS_DATA[sec];
+  let correct=0,total=0;
+
+  if(sec===1){
+    d.zones.forEach(z=>{
+      const dzItems=document.getElementById('dzi-1-'+z.id);
+      if(!dzItems)return;
+      dzItems.querySelectorAll('.chip').forEach(chip=>{
+        total++;
+        const word=chip.dataset.text;
+        const isCorrect=z.correct.includes(word);
+        chip.classList.remove('correct-chip','wrong-chip');
+        chip.classList.add(isCorrect?'correct-chip':'wrong-chip');
+        if(isCorrect)correct++;
+      });
+      // Check zone itself
+      const dz=document.getElementById('dz-1-'+z.id);
+      dz.classList.remove('correct-zone','wrong-zone');
+      // zone glow based on contents
+    });
+    // Also check unplaced (wrong — should be placed)
+    const unplaced=document.querySelectorAll('#bank-1 .chip');
+    unplaced.forEach(chip=>{chip.classList.add('wrong-chip');});
+    total=d.words.length;
+    if(unplaced.length>0)playWrong(); else if(correct===total)playCorrect(); else playWrong();
+  }
+
+  else if(sec===2){
+    d.pairs.forEach((p,i)=>{
+      const dz=document.getElementById('md-2-'+i);
+      const items=dz.querySelector('.drop-zone-items');
+      total++;
+      const chip=items?items.querySelector('.chip'):null;
+      dz.classList.remove('correct-zone','wrong-zone');
+      if(chip){
+        const placed=chip.dataset.text;
+        const isCorrect=placed===p.common;
+        chip.classList.remove('correct-chip','wrong-chip');
+        chip.classList.add(isCorrect?'correct-chip':'wrong-chip');
+        dz.classList.add(isCorrect?'correct-zone':'wrong-zone');
+        if(isCorrect)correct++;
+      } else {
+        dz.classList.add('wrong-zone');
+      }
+    });
+    if(correct===total)playCorrect(); else playWrong();
+  }
+
+  else if(sec===3||sec===4||sec===5){
+    d.questions.forEach((q,qi)=>{
+      const dz=document.getElementById('fib-'+sec+'-'+qi);
+      const items=dz?dz.querySelector('.drop-zone-items')||dz:null;
+      total++;
+      const chip=items?items.querySelector('.chip'):null;
+      if(dz){dz.classList.remove('correct-zone','wrong-zone');}
+      if(chip){
+        const placed=chip.dataset.text;
+        const isCorrect=placed===q.ans;
+        chip.classList.remove('correct-chip','wrong-chip');
+        chip.classList.add(isCorrect?'correct-chip':'wrong-chip');
+        if(dz)dz.classList.add(isCorrect?'correct-zone':'wrong-zone');
+        if(isCorrect)correct++;
+      } else {
+        if(dz)dz.classList.add('wrong-zone');
+      }
+    });
+    if(correct===total)playCorrect(); else playWrong();
+  }
+
+  else if(sec===6){
+    const zd=d.zones;
+    Object.keys(zd).forEach(zid=>{
+      const zEl=document.getElementById('zone-'+zid);
+      if(!zEl)return;
+      zEl.querySelectorAll('.chip').forEach(chip=>{
+        total++;
+        const word=chip.dataset.text;
+        const isCorrect=zd[zid].correct.includes(word);
+        chip.classList.remove('correct-chip','wrong-chip');
+        chip.classList.add(isCorrect?'correct-chip':'wrong-chip');
+        if(isCorrect)correct++;
+      });
+    });
+    // unplaced
+    const unplaced6=document.querySelectorAll('#bank-6 .chip').length;
+    total=d.words.length;
+    if(correct===total&&unplaced6===0)playCorrect(); else playWrong();
+  }
+
+  scores[sec]=correct;
+  maxScores[sec]=total||maxScores[sec];
+  updateHeader();
+
+  // Show section result
+  const resEl=document.getElementById('res-'+sec);
+  const pct=total>0?Math.round((correct/total)*100):0;
+  resEl.innerHTML=`<div class="sr-score">${correct} / ${total}</div>
+    <div class="sr-label">${pct}% — ${getGradeLabel(pct)}</div>`;
+  resEl.classList.add('show','slide-up');
+
+  // Mark tab done
+  const tab=document.getElementById('tab-'+sec);
+  if(tab){tab.classList.remove('active');tab.classList.add('done');}
+}
+
+// ══════════════════════════════════════════════════════════════
+// RESET SECTION
+// ══════════════════════════════════════════════════════════════
+function resetSection(sec){
+  const panel=document.getElementById('panel-'+sec);
+  // Return all chips to bank
+  panel.querySelectorAll('.drop-zone .chip,.blank-drop .chip,.sort-drop .chip').forEach(chip=>{
+    chip.classList.remove('correct-chip','wrong-chip','placed');
+    returnToBank(chip);
+  });
+  // Remove zone colours
+  panel.querySelectorAll('.drop-zone,.blank-drop,.match-drop,.sort-drop').forEach(dz=>{
+    dz.classList.remove('correct-zone','wrong-zone','drag-over');
+  });
+  // Hide result
+  const resEl=document.getElementById('res-'+sec);
+  if(resEl){resEl.classList.remove('show');resEl.innerHTML='';}
+  scores[sec]=0;
+  updateHeader();
+}
+
+// ══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════════════
+function goSection(sec){
+  document.querySelectorAll('.sec-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sec-tab').forEach(t=>t.classList.remove('active'));
+  const panel=document.getElementById('panel-'+sec);
+  if(panel){panel.classList.add('active');}
+  const tab=document.getElementById('tab-'+sec);
+  if(tab&&!tab.classList.contains('done'))tab.classList.add('active');
+  currentSec=sec;
+  document.getElementById('qh-sec-label').textContent='Section '+sec;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function updateHeader(){
+  let total=0,got=0;
+  for(let i=1;i<=6;i++){got+=scores[i];total+=maxScores[i];}
+  document.getElementById('qh-score').textContent=got;
+  document.getElementById('qh-prog').style.width=(total>0?(got/total)*100:0)+'%';
+}
+
+// ══════════════════════════════════════════════════════════════
+// RESULT SCREEN
+// ══════════════════════════════════════════════════════════════
+function showResult(){
+  let total=0,got=0;
+  for(let i=1;i<=6;i++){got+=scores[i];total+=maxScores[i];}
+  const pct=total>0?Math.round((got/total)*100):0;
+
+  document.getElementById('quiz').classList.remove('active');
+  document.getElementById('result').classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+
+  document.getElementById('res-score-big').innerHTML=got+' <span>/ '+total+'</span>';
+  document.getElementById('res-pct-line').textContent='Percentage: '+pct+'%';
+
+  // Grade
+  let grade,emoji,title,gc;
+  if(pct>=90){grade='S — Outstanding';emoji='&#x1F3C6;';title='Outstanding!';gc='grade-s';}
+  else if(pct>=75){grade='A — Excellent';emoji='&#x1F31F;';title='Excellent Work!';gc='grade-a';}
+  else if(pct>=60){grade='B — Good';emoji='&#x1F44D;';title='Good Job!';gc='grade-b';}
+  else if(pct>=40){grade='C — Average';emoji='&#x1F4DA;';title='Keep Practising!';gc='grade-c';}
+  else{grade='F — Needs Improvement';emoji='&#x1F4AA;';title='Try Again!';gc='grade-f';}
+
+  document.getElementById('res-emoji').innerHTML=emoji;
+  document.getElementById('res-main-title').textContent=title;
+  const gb=document.getElementById('res-grade-badge');
+  gb.textContent=grade; gb.className='result-grade-badge '+gc;
+
+  // Stars
+  const stars=[document.getElementById('star1'),document.getElementById('star2'),document.getElementById('star3')];
+  stars.forEach(s=>s.classList.remove('lit'));
+  const starCount=pct>=75?3:pct>=50?2:pct>=25?1:0;
+  for(let i=0;i<starCount;i++)setTimeout(()=>stars[i].classList.add('lit'),400+i*300);
+
+  // Section breakdown
+  const labels=['Noun Categories','Proper→Common','Collective Nouns','Personal Pronouns','Possessive Pronouns','Verb Sorting'];
+  let sbHTML='';
+  for(let i=1;i<=6;i++){
+    const sp=maxScores[i]>0?Math.round((scores[i]/maxScores[i])*100):0;
+    sbHTML+=`<div class="sb-row">
+      <div class="sb-label">S${i}: ${labels[i-1]}</div>
+      <div class="sb-bar-wrap"><div class="sb-bar" style="width:0%" id="sbbar-${i}"></div></div>
+      <div class="sb-val">${scores[i]}/${maxScores[i]}</div>
+    </div>`;
+  }
+  document.getElementById('sb-rows').innerHTML=sbHTML;
+  setTimeout(()=>{for(let i=1;i<=6;i++){const b=document.getElementById('sbbar-'+i);const sp=maxScores[i]>0?Math.round((scores[i]/maxScores[i])*100):0;if(b)b.style.width=sp+'%';}},200);
+
+  if(pct>=60)launchConfetti();
+  window._finalResult={got,total,pct,grade};
+}
+
+function getGradeLabel(pct){
+  if(pct>=90)return 'Outstanding';
+  if(pct>=75)return 'Excellent';
+  if(pct>=60)return 'Good';
+  if(pct>=40)return 'Average';
+  return 'Needs Improvement';
+}
+
+// ══════════════════════════════════════════════════════════════
+// CONFETTI
+// ══════════════════════════════════════════════════════════════
+function launchConfetti(){
+  const canvas=document.getElementById('confetti-canvas');
+  const ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  const colors=['#C9A227','#f0c84a','#2ecc71','#e74c3c','#3498db','#ff69b4','#00d1b2','#fff'];
+  const P=Array.from({length:240},()=>({
+    x:Math.random()*canvas.width,y:Math.random()*canvas.height-canvas.height,
+    r:Math.random()*7+3,d:Math.random()*180+10,
+    c:colors[Math.floor(Math.random()*colors.length)],
+    ta:0,ti:Math.random()*0.07+0.05,sh:Math.random()>0.5?'c':'r'
+  }));
+  let angle=0,frame=0;
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);angle+=0.01;
+    P.forEach(p=>{
+      p.ta+=p.ti;p.y+=(Math.cos(angle+p.d)+2+p.r/5);p.x+=Math.sin(angle);
+      const tilt=Math.sin(p.ta)*15;
+      ctx.fillStyle=p.c;ctx.beginPath();
+      if(p.sh==='c'){ctx.arc(p.x,p.y,p.r,0,2*Math.PI);}
+      else{ctx.rect(p.x+tilt,p.y,p.r*2,p.r*2);}
+      ctx.closePath();ctx.fill();
+      if(p.y>canvas.height){p.x=Math.random()*canvas.width;p.y=-20;}
+    });
+    frame++;if(frame<380)requestAnimationFrame(draw);else ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+  draw();
+}
+
+// ══════════════════════════════════════════════════════════════
+// PDF REPORT
+// ══════════════════════════════════════════════════════════════
+function downloadPDF(){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'mm',format:'a4'});
+  const W=210,M=14,CW=W-M*2;
+  const navy=[15,30,58],navy2=[27,42,74],gold=[201,162,39],white=[255,255,255];
+  const green=[46,139,87],red=[192,57,43],gray=[220,225,235];
+  const r=window._finalResult||{got:0,total:0,pct:0,grade:'N/A'};
+
+  // Header
+  doc.setFillColor(...navy);doc.rect(0,0,210,42,'F');
+  doc.setFillColor(...gold);doc.rect(0,42,210,2.5,'F');
+  doc.setTextColor(...gold);doc.setFont('helvetica','bold');doc.setFontSize(16);
+  doc.text('Class VIII English — Drag & Drop Quiz',W/2,13,{align:'center'});
+  doc.setFontSize(10);doc.setTextColor(...white);
+  doc.text('Interactive Grammar Quiz — Performance Report',W/2,22,{align:'center'});
+  doc.setFontSize(8);doc.setTextColor(180,200,220);
+  doc.text('English Teachers Hub - Theni  |  T.S. Ramachandran, ELT, GHSS Erasakkanayakanur',W/2,31,{align:'center'});
+
+  let y=50;
+
+  // Student info box
+  doc.setFillColor(235,240,255);doc.roundedRect(M,y,CW,34,3,3,'F');
+  doc.setDrawColor(...gold);doc.setLineWidth(0.5);doc.roundedRect(M,y,CW,34,3,3,'S');
+
+  const fields=[
+    ['STUDENT NAME',student.name||'N/A',M+4],
+    ['CLASS',student.cls||'VIII',M+4+CW*0.5],
+    ['SCHOOL',student.school||'N/A',M+4],
+    ['SECTION',student.section||'N/A',M+4+CW*0.5],
+    ['DATE',student.date||'N/A',M+4+CW*0.75]
+  ];
+  doc.setFontSize(7);doc.setTextColor(100,110,130);doc.setFont('helvetica','normal');
+  doc.text('STUDENT NAME',M+4,y+7);doc.text('CLASS / SECTION',M+4+CW*0.5,y+7);
+  doc.setFontSize(10);doc.setTextColor(...navy);doc.setFont('helvetica','bold');
+  doc.text(student.name||'N/A',M+4,y+15);
+  doc.text((student.cls||'VIII')+' — '+(student.section||'N/A'),M+4+CW*0.5,y+15);
+  doc.setFontSize(7);doc.setTextColor(100,110,130);doc.setFont('helvetica','normal');
+  doc.text('SCHOOL NAME',M+4,y+21);doc.text('DATE OF TEST',M+4+CW*0.65,y+21);
+  doc.setFontSize(9);doc.setTextColor(...navy);doc.setFont('helvetica','bold');
+  const schoolT=(student.school||'N/A').slice(0,40);
+  doc.text(schoolT,M+4,y+29);
+  doc.text(student.date||'N/A',M+4+CW*0.65,y+29);
+
+  y+=42;
+
+  // Score summary
+  doc.setFillColor(...navy);doc.roundedRect(M,y,CW,36,4,4,'F');
+  doc.setTextColor(...gold);doc.setFont('helvetica','bold');doc.setFontSize(9);
+  doc.text('TOTAL SCORE',M+8,y+9);
+  doc.setFontSize(26);doc.text(r.got+' / '+r.total,M+8,y+25);
+  doc.setTextColor(200,220,240);doc.setFontSize(9);doc.setFont('helvetica','normal');
+  doc.text('Percentage: '+r.pct+'%',M+80,y+13);
+  doc.text('Grade: '+r.grade,M+80,y+23);
+  doc.setFillColor(40,60,100);doc.roundedRect(M+80,y+26,90,5,2,2,'F');
+  const bw=r.total>0?90*(r.got/r.total):0;
+  const bc=r.pct>=75?[46,180,100]:r.pct>=50?[210,170,50]:[192,70,70];
+  doc.setFillColor(...bc);doc.roundedRect(M+80,y+26,bw,5,2,2,'F');
+
+  y+=44;
+
+  // Section breakdown table
+  doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...navy);
+  doc.text('Section-wise Performance',M,y);y+=8;
+
+  const secLabels=['Noun Categories','Proper→Common Noun','Collective Nouns','Personal Pronouns','Possessive Pronouns','Transitive/Intransitive Verbs'];
+  const thW=[8,72,22,18,26,24];
+  const thX=[M+1,M+10,M+84,M+107,M+126,M+153];
+  const thHdrs=['S','Section / Topic','Score','Max','Pct','Grade'];
+
+  doc.setFillColor(...navy);doc.rect(M,y,CW,8,'F');
+  doc.setTextColor(...gold);doc.setFont('helvetica','bold');doc.setFontSize(7.5);
+  thHdrs.forEach((h,i)=>doc.text(h,thX[i],y+5.5));
+  y+=8;
+
+  for(let i=1;i<=6;i++){
+    const sp=maxScores[i]>0?Math.round((scores[i]/maxScores[i])*100):0;
+    const rowH=8;
+    doc.setFillColor(i%2===0?241:248,i%2===0?244:249,i%2===0?252:255);
+    doc.rect(M,y,CW,rowH,'F');
+    const tc=sp>=75?green:sp>=50?[200,140,0]:red;
+    const gl=getGradeLabel(sp).slice(0,10);
+    const rowVals=[''+i,secLabels[i-1],''+scores[i],''+maxScores[i],sp+'%',gl];
+    rowVals.forEach((v,vi)=>{
+      if(vi>=2){doc.setTextColor(...tc);doc.setFont('helvetica','bold');}
+      else{doc.setTextColor(...navy2);doc.setFont('helvetica','normal');}
+      doc.setFontSize(7.5);doc.text(v,thX[vi]+1,y+5.5);
+    });
+    doc.setDrawColor(...gray);doc.setLineWidth(0.15);doc.rect(M,y,CW,rowH,'S');
+    y+=rowH;
+  }
+
+  // Total row
+  doc.setFillColor(...navy);doc.rect(M,y,CW,9,'F');
+  doc.setTextColor(...gold);doc.setFont('helvetica','bold');doc.setFontSize(8.5);
+  doc.text('TOTAL',thX[1],y+6);
+  doc.setTextColor(...white);
+  doc.text(r.got+' / '+r.total,thX[2],y+6);
+  doc.text(r.pct+'%',thX[4],y+6);
+  y+=14;
+
+  // Remark
+  const remarks={S:'Outstanding! Excellent command of all grammar topics. Keep it up!',A:'Excellent work! A little more practice will make it perfect.',B:'Good effort! Review the sections where you lost marks.',C:'Average. Focus on the weaker sections and revise regularly.',F:'Needs improvement. Please revise and attempt the quiz again.'};
+  const rKey=r.grade.charAt(0);
+  const remark=remarks[rKey]||'Keep working hard!';
+  if(y+18>275){doc.addPage();y=18;}
+  doc.setFillColor(235,240,255);doc.roundedRect(M,y,CW,16,3,3,'F');
+  doc.setDrawColor(...gold);doc.setLineWidth(0.4);doc.roundedRect(M,y,CW,16,3,3,'S');
+  doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...navy);
+  doc.text('Teacher Remark:',M+4,y+7);
+  doc.setFont('helvetica','normal');doc.setTextColor(50,70,120);
+  doc.text(remark,M+4,y+13);
+
+  // Footer
+  const pages=doc.internal.getNumberOfPages();
+  for(let p=1;p<=pages;p++){
+    doc.setPage(p);
+    doc.setFillColor(...navy);doc.rect(0,287,210,10,'F');
+    doc.setFont('helvetica','normal');doc.setFontSize(6.5);doc.setTextColor(...gold);
+    doc.text('English Teachers Hub - Theni  |  T.S. Ramachandran, ELT, GHSS Erasakkanayakanur, Theni District',W/2,293,{align:'center'});
+    doc.setTextColor(150,170,200);doc.text('Page '+p+' of '+pages,W-M,293,{align:'right'});
+  }
+
+  const safe=(student.name||'Student').replace(/[^a-zA-Z0-9]/g,'_');
+  doc.save('VIII_DragDrop_Quiz_'+safe+'.pdf');
+}
+
+// ══════════════════════════════════════════════════════════════
+// START / RETRY
+// ══════════════════════════════════════════════════════════════
+function startQuiz(){
+  student.name=document.getElementById('h-name').value.trim()||'Student';
+  student.school=document.getElementById('h-school').value.trim()||'N/A';
+  student.cls=document.getElementById('h-class').value.trim()||'VIII';
+  student.section=document.getElementById('h-section').value.trim()||'N/A';
+  student.date=document.getElementById('h-date').value.trim()||'N/A';
+  document.getElementById('home').classList.remove('active');
+  document.getElementById('home').style.display='none';
+  document.getElementById('quiz').classList.add('active');
+  buildAll();
+  goSection(1);
+  updateHeader();
+}
+
+function retryQuiz(){
+  scores={1:0,2:0,3:0,4:0,5:0,6:0};
+  maxScores={1:0,2:0,3:0,4:0,5:0,6:0};
+  document.getElementById('result').classList.remove('active');
+  document.getElementById('quiz').classList.add('active');
+  // Rebuild all sections
+  buildAll();
+  goSection(1);
+  updateHeader();
+  // Re-mark all tabs as unvisited
+  document.querySelectorAll('.sec-tab').forEach(t=>{t.classList.remove('done','active');});
+  document.getElementById('tab-1').classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
