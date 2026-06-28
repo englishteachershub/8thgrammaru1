@@ -887,13 +887,13 @@ function pdfAnswerTable(doc,M,CW,y,records){
   y+=8;
   records.forEach((r,i)=>{
     const rh=9;
-    if(y+rh>278){pdfFooterAll(doc,210,M);doc.addPage();y=18;
+    if(y+rh>278){doc.addPage();y=18;
       doc.setFillColor(...navy);doc.rect(M,y,CW,8,'F');
       doc.setTextColor(...gold);doc.setFont('helvetica','bold');doc.setFontSize(7.5);
       hdrs.forEach((h,hi)=>doc.text(h,colX[hi],y+5.5));y+=8;}
-    doc.setFillColor(r.ok?[240,255,245]:i%2===0?[248,249,255]:[241,243,252]);
+    if(r.ok){doc.setFillColor(240,255,245);}else if(i%2===0){doc.setFillColor(248,249,255);}else{doc.setFillColor(241,243,252);}
     doc.rect(M,y,CW,rh,'F');
-    doc.setFillColor(...(r.ok?green:red)); doc.rect(M,y,2,rh,'F');
+    if(r.ok){doc.setFillColor(46,139,87);}else{doc.setFillColor(192,57,43);} doc.rect(M,y,2,rh,'F');
     const qt=r.q.length>48?r.q.slice(0,48)+'...':r.q;
     const ua=r.userAns.length>22?r.userAns.slice(0,22)+'...':r.userAns;
     const ca=r.correctAns.length>22?r.correctAns.slice(0,22)+'...':r.correctAns;
@@ -901,11 +901,11 @@ function pdfAnswerTable(doc,M,CW,y,records){
     doc.setTextColor(...navy2); doc.setFont('helvetica','normal');
     doc.text(''+(i+1),colX[0]+2,y+6);
     doc.text(qt,colX[1],y+6);
-    doc.setTextColor(...(r.ok?green:red)); doc.setFont('helvetica','bold');
+    if(r.ok){doc.setTextColor(46,139,87);}else{doc.setTextColor(192,57,43);} doc.setFont('helvetica','bold');
     doc.text(ua,colX[2],y+6);
     doc.setTextColor(...green);
     doc.text(ca,colX[3],y+6);
-    doc.setTextColor(...(r.ok?green:red));
+    if(r.ok){doc.setTextColor(46,139,87);}else{doc.setTextColor(192,57,43);}
     doc.text(r.ok?'1':'0',colX[4]+3,y+6);
     doc.setDrawColor(...gray); doc.setLineWidth(0.12); doc.rect(M,y,CW,rh,'S');
     y+=rh;
@@ -939,7 +939,7 @@ function downloadSectionPDF(sec){
   doc.text('Grade: '+gradeLabel(pct),M+80,y+22);
   const bc=pct>=75?green:pct>=50?[200,140,0]:red;
   doc.setFillColor(40,60,100); doc.roundedRect(M+80,y+26,88,5,2,2,'F');
-  doc.setFillColor(...bc); doc.roundedRect(M+80,y+26,88*(res.correct/res.total),5,2,2,'F');
+  doc.setFillColor(bc[0],bc[1],bc[2]); doc.roundedRect(M+80,y+26,88*(res.correct/res.total),5,2,2,'F');
   y+=42;
 
   // Answer table
@@ -952,7 +952,7 @@ function downloadSectionPDF(sec){
   doc.setFillColor(...navy); doc.rect(M,y,CW,9,'F');
   doc.setTextColor(...gold); doc.setFont('helvetica','bold'); doc.setFontSize(8.5);
   doc.text('TOTAL',M+11,y+6);
-  doc.setTextColor(white[0],white[1]||255,white[2]||255);
+  doc.setTextColor(255,255,255);
   doc.text(res.correct+' correct   '+( res.total-res.correct)+' incorrect',M+85,y+6);
   doc.text(pct+'%',M+170,y+6);
   y+=14;
@@ -999,7 +999,7 @@ function downloadFinalPDF(){
   doc.setFillColor(40,60,100); doc.roundedRect(M+80,y+28,88,5,2,2,'F');
   const bw=r.total>0?88*(r.got/r.total):0;
   const bc2=r.pct>=75?green:r.pct>=50?[200,140,0]:red;
-  doc.setFillColor(...bc2); doc.roundedRect(M+80,y+28,bw,5,2,2,'F');
+  doc.setFillColor(bc2[0],bc2[1],bc2[2]); doc.roundedRect(M+80,y+28,bw,5,2,2,'F');
   y+=44;
 
   // Section summary table
@@ -1012,12 +1012,12 @@ function downloadFinalPDF(){
   th2.forEach((h,i)=>doc.text(h,thX2[i],y+5.5)); y+=8;
   for(let i=1;i<=6;i++){
     const sp=maxScores[i]>0?Math.round((scores[i]/maxScores[i])*100):0;
-    doc.setFillColor(i%2===0?241:248,i%2===0?244:249,i%2===0?252:255);
+    if(i%2===0){doc.setFillColor(248,249,255);}else{doc.setFillColor(241,243,252);}
     doc.rect(M,y,CW,8,'F');
     const tc=sp>=75?green:sp>=50?[200,140,0]:red;
     [''+i,secNames[i],''+scores[i],''+maxScores[i],sp+'%',gradeLabel(sp).slice(0,8)].forEach((v,vi)=>{
-      if(vi>=2){doc.setTextColor(...tc);doc.setFont('helvetica','bold');}
-      else{doc.setTextColor(...navy2);doc.setFont('helvetica','normal');}
+      if(vi>=2){doc.setTextColor(tc[0],tc[1],tc[2]);doc.setFont('helvetica','bold');}
+      else{doc.setTextColor(navy2[0],navy2[1],navy2[2]);doc.setFont('helvetica','normal');}
       doc.setFontSize(7.5); doc.text(v,thX2[vi]+1,y+5.5);
     });
     doc.setDrawColor(...gray); doc.setLineWidth(0.12); doc.rect(M,y,CW,8,'S');
