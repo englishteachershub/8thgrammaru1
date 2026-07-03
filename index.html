@@ -405,7 +405,7 @@ const SD = {
     ]
   },
   5:{type:'fib',
-    words:['mine','hers'],
+    words:['mine','hers','mine','mine','hers'],
     questions:[
       {text:'This pen is ____.',          ans:'mine'},
       {text:'The missing purse is ____.',  ans:'hers'},
@@ -481,7 +481,11 @@ function build2(){
 function buildFIB(s){
   const d=SD[s]; maxScores[s]=d.questions.length;
   const b=document.getElementById('bank-'+s); b.innerHTML='';
-  d.words.forEach((w,i)=>b.innerHTML+=chipHTML('s'+s+'_w'+i,w));
+  // Each word in d.words gets its own chip with unique index ID
+  // Section 5 has words repeated to match question count
+  // Shuffle display order so answers aren't obvious
+  const shuffled=[...d.words.map((w,i)=>({w,i}))].sort(()=>Math.random()-0.5);
+  shuffled.forEach(({w,i})=>b.innerHTML+=chipHTML('s'+s+'_w'+i,w));
   const list=document.getElementById('zones-'+s); list.innerHTML='';
   d.questions.forEach((q,qi)=>{
     const parts=q.text.split('____');
